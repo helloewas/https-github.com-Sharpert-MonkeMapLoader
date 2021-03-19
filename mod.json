@@ -1,0 +1,44 @@
+{
+    "_QPVersion": "0.1.0",
+    "name": "Monke Map Loader",
+    "id": "MonkeMapLoader",
+    "author": "RedBrumbler",
+    "version": "1.0.0",
+    "packageId": "com.AnotherAxiom.GorillaTag",
+    "packageVersion": "1.0.1",
+    "type": "Gameplay",
+    "dependencies": [
+        {
+            "id": "MonkeComputer",
+            "version": "^1.0.1",
+            "downloadIfMissing": "https://github.com/RedBrumbler/MonkeComputer/releases/download/1.0.1/MonkeComputer.qmod"
+        }
+    ],
+    "modFiles": [
+        "libmonkemaploader.so"
+    ],
+    "libraryFiles": [
+        "libbeatsaber-hook_1_1_0.so",
+        "libbeatsaber-hook_1_1_2.so",
+        "libcustom-types.so",
+        "libzip.so"
+    ],
+    "fileCopies": [
+        {
+            "name": "orb.json",
+            "destination": "/sdcard/ModData/com.AnotherAxiom.GorillaTag/Mods/MonkeMapLoader/Orb/orb.json"
+        },
+        {
+            "name": "orb",
+            "destination": "/sdcard/ModData/com.AnotherAxiom.GorillaTag/Mods/MonkeMapLoader/Orb/orb"
+        },
+        {
+            "name": "teleporter.json",
+            "destination": "/sdcard/ModData/com.AnotherAxiom.GorillaTag/Mods/MonkeMapLoader/Teleporter/teleporter.json"
+        },
+        {
+            "name": "teleporter",
+            "destination": "/sdcard/ModData/com.AnotherAxiom.GorillaTag/Mods/MonkeMapLoader/Teleporter/teleporter"
+        }
+    ]
+}
