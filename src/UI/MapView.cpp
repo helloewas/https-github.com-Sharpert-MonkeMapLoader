@@ -14,6 +14,7 @@ namespace MapLoader
     void MapView::Awake()
     {
         loaded = false;
+        mapInfo = nullptr;
     }
 
     void MapView::DidActivate(bool firstActivation)
@@ -24,9 +25,14 @@ namespace MapLoader
 
     void MapView::Load()
     {
+        if (!mapInfo)
+        {
+            return;
+        }
+        
         static std::vector<Il2CppClass*> loaderKlass = {classof(Loader*)};
         Loader* loader = *il2cpp_utils::RunGenericMethod<Loader*>("UnityEngine", "Object", "FindObjectOfType", loaderKlass);
-        loader->LoadMap(*mapInfo);
+        loader->LoadMap(*(MapInfo*)mapInfo);
     }
 
     void MapView::Redraw()
@@ -40,8 +46,32 @@ namespace MapLoader
         }
         else
         {
-            text += "\n\n\n\n\n";
-            text += "           Loading Map!";
+            text += "                                                          <size=25>\n";
+            text += "                                                                <color=#2222ff>##########\n";
+            text += "                                                          ######<color=#00dd00>####</color>############\n";
+            text += "                                                      ########<color=#00dd00>######</color>################\n";
+            text += "                                                    <color=#00dd00>####</color>########<color=#00dd00>####</color>################<color=#00dd00>##</color>\n";
+            text += "                                                  <color=#00dd00>########</color>####<color=#00dd00>##</color>##<color=#00dd00>##</color>##############<color=#00dd00>######</color>\n";
+            text += "                                                  <color=#00dd00>##########</color>##################<color=#00dd00>##########</color>\n";
+            text += "                                                <color=#00dd00>####################</color>########<color=#00dd00>##############</color>\n";
+            text += "                                                <color=#00dd00>############</color>##<color=#00dd00>######</color>########<color=#00dd00>##############</color>\n";
+            text += "                                                <color=#00dd00>##########</color>##<color=#00dd00>########</color>######<color=#00dd00>##########</color>####<color=#00dd00>##</color>\n";
+            text += "                                              <color=#00dd00>####################</color>########<color=#00dd00>########</color>########<color=#00dd00>##</color>\n";
+            text += "                                              <color=#00dd00>####################</color>##########<color=#00dd00>####</color>####<color=#00dd00>########</color>\n";
+            text += "                                              <color=#00dd00>##################</color>################<color=#00dd00>############</color>\n";
+            text += "                                              <color=#00dd00>##################</color>##############<color=#00dd00>##############</color>\n";
+            text += "                                              ##########<color=#00dd00>######</color>################<color=#00dd00>##############</color>\n";
+            text += "                                                ############<color=#00dd00>##</color>##############<color=#00dd00>##############</color>\n";
+            text += "                                                ######<color=#00dd00>##</color>####<color=#00dd00>##</color>##############<color=#00dd00>##############</color>\n";
+            text += "                                                ####<color=#00dd00>##</color>######################<color=#00dd00>##############</color>\n";
+            text += "                                                  ##########################<color=#00dd00>############</color>\n";
+            text += "                                                  ############################<color=#00dd00>##########</color>\n";
+            text += "                                                    ####<color=#00dd00>##</color>####################<color=#00dd00>########</color>\n";
+            text += "                                                      <color=#00dd00>####</color>####################<color=#00dd00>######</color>\n";
+            text += "                                                          ##<color=#00dd00>####</color>################\n";
+            text += "                                                                ##########</color>\n";
+            text += "                                              </size>\n";
+            text += "                 MAP LOADED\n";
         }
 
         CustomComputer::Redraw();
@@ -54,22 +84,17 @@ namespace MapLoader
     
     void MapView::DrawMap()
     {
+        if (!mapInfo) return;
         text += "\n<size=60>";
-        text += string_format("  Author: %s\n", mapInfo->packageInfo->descriptor.author.c_str());
-        text += string_format("  Map Name: %s\n", mapInfo->packageInfo->descriptor.mapName.c_str());
-        text += string_format("  Description: %s\n", mapInfo->packageInfo->descriptor.description.c_str());
+        text += string_format("  Author: <color=#fdfdfd>%s</color>\n", ((MapInfo*)mapInfo)->packageInfo->descriptor.author.c_str());
+        text += string_format("  Map Name: <color=#fdfdfd>%s</color>\n", ((MapInfo*)mapInfo)->packageInfo->descriptor.mapName.c_str());
+        text += string_format("  Description: <color=#fdfdfd>%s</color>\n", ((MapInfo*)mapInfo)->packageInfo->descriptor.description.c_str());
         text += "\n</size>";
     }
     
     void MapView::OnKeyPressed(int key)
     {
-        if (loaded)
-        {
-            MapSelectorViewManager* viewManager = reinterpret_cast<MapSelectorViewManager*>(CustomComputer::get_instance()->activeViewManager);
-            viewManager->BackButtonWasPressed(this);
-            return;
-        }
-        
+        if (loaded) return;
         if (key == (int)EKeyboardKey::Enter)
         {
             loaded = true;

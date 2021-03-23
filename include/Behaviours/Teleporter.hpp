@@ -19,9 +19,10 @@ DECLARE_CLASS_CODEGEN(MapLoader, Teleporter, MapLoader::GorillaMapTriggerBase,
     DECLARE_INSTANCE_FIELD(bool, tagOnTeleport);
     DECLARE_INSTANCE_FIELD(bool, isTeleporting);
     DECLARE_INSTANCE_FIELD(bool, joinGameOnTeleport);
+    DECLARE_INSTANCE_FIELD(List<Il2CppObject*>*, teleportPoints);
     
     public:
-        std::vector<Il2CppObject*> teleportPoints;
+        //std::vector<Il2CppObject*> teleportPoints;
         TeleporterType teleporterType = TeleporterType::Normal;
 
     REGISTER_FUNCTION(Teleporter,
@@ -30,5 +31,6 @@ DECLARE_CLASS_CODEGEN(MapLoader, Teleporter, MapLoader::GorillaMapTriggerBase,
         REGISTER_METHOD(TeleportPlayer);
         REGISTER_FIELD(isTeleporting);
         REGISTER_FIELD(joinGameOnTeleport);
+        REGISTER_FIELD(teleportPoints);
     )
 )

@@ -2,6 +2,7 @@
 #include "Behaviours/TagZone.hpp"
 #include "Behaviours/Player.hpp"
 #include "Behaviours/MapLoader.hpp"
+#include "beatsaber-hook/shared/utils/il2cpp-type-check.hpp"
 
 DEFINE_CLASS(MapLoader::Teleporter);
 
@@ -9,7 +10,12 @@ namespace MapLoader
 {
     void Teleporter::Awake()
     {
-        teleportPoints.clear();
+        static std::vector<const Il2CppClass*> transformKlass = {il2cpp_utils::GetClassFromName("UnityEngine", "Transform")};
+        static Il2CppClass* listKlass = il2cpp_utils::GetClassFromName("System.Collections.Generic", "List`1");
+        static Il2CppClass* transformListKlass = il2cpp_utils::MakeGeneric(listKlass, transformKlass);
+        teleportPoints = *il2cpp_utils::New<List<Il2CppObject*>*>(transformListKlass);
+        il2cpp_utils::RunMethod(teleportPoints, "Clear");
+
         joinGameOnTeleport = false;
         isTeleporting = false;
         tagOnTeleport = false;
@@ -33,23 +39,23 @@ namespace MapLoader
             Il2CppObject* containerTransform = *il2cpp_utils::RunMethod(spawnPointContainer, "get_transform");
 
             int childCount = *il2cpp_utils::RunMethod<int>(containerTransform, "get_childCount");
-            teleportPoints.clear();
-            
+            il2cpp_utils::RunMethod(teleportPoints, "Clear");
+            getLogger().info("Found %d children to teleport to!", childCount);
             for (int i = 0; i < childCount; i++)
             {
                 Il2CppObject* child = *il2cpp_utils::RunMethod(containerTransform, "GetChild", i);
-                teleportPoints.push_back(child);
+                il2cpp_utils::RunMethod(teleportPoints, "Add", child);
             }
         }
 
-        if (teleportPoints.size() == 0)
+        if (teleportPoints->size == 0)
         {
             if (teleporterType == TeleporterType::Map)
             {
                 static Il2CppString* treeHomeTargetObjectName = il2cpp_utils::createcsstr("TreeHomeTargetObject", il2cpp_utils::StringType::Manual);
                 Il2CppObject* treeHomeTargetObject = *il2cpp_utils::RunMethod("UnityEngine", "GameObject", "Find", treeHomeTargetObjectName);
                 Il2CppObject* treeHomeTransform = *il2cpp_utils::RunMethod(treeHomeTargetObject, "get_transform");
-                teleportPoints.push_back(treeHomeTransform);
+                il2cpp_utils::RunMethod(teleportPoints, "Add", treeHomeTransform);
             }
             else 
             {
@@ -58,14 +64,17 @@ namespace MapLoader
             }
         }
 
-        int index = teleportPoints.size() > 1 ? 0 : rand() % teleportPoints.size();
-        Il2CppObject* dest = teleportPoints[index]; 
+        int index = teleportPoints->size > 1 ? rand() % teleportPoints->size : 0;
+        Il2CppObject* dest = teleportPoints->items->values[index];
         
-        Player::TeleportPlayer(dest);
+        // insttead of telepporting here
 
         if (tagOnTeleport) TagZone::TagLocalPlayer();
         if (joinGameOnTeleport) Loader::JoinGame();
         if (teleporterType == TeleporterType::Treehouse) Loader::ResetMapProperties();
+        
+        // teleport after the entire world has been shifted
+        Player::TeleportPlayer(dest);
 
         isTeleporting = false;
     }

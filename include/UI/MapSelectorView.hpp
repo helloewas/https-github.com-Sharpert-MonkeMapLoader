@@ -15,10 +15,8 @@ DECLARE_CLASS_CODEGEN(MapLoader, MapSelectorView, GorillaUI::Components::View,
     DECLARE_INSTANCE_FIELD(GorillaUI::Components::View*, mapView);
     DECLARE_INSTANCE_FIELD(int, pageCount);
     DECLARE_INSTANCE_FIELD(int, mapCount);
-
-    public:
-        GorillaUI::UISelectionHandler* selectionHandler = nullptr;
-        GorillaUI::UISelectionHandler* pageSelectionHandler = nullptr;
+    DECLARE_INSTANCE_FIELD(void*, selectionHandler);
+    DECLARE_INSTANCE_FIELD(void*, pageSelectionHandler);
     
     REGISTER_FUNCTION(MapSelectorView,
         REGISTER_METHOD(Awake);
@@ -31,5 +29,7 @@ DECLARE_CLASS_CODEGEN(MapLoader, MapSelectorView, GorillaUI::Components::View,
         REGISTER_FIELD(mapView);
         REGISTER_FIELD(pageCount);
         REGISTER_FIELD(mapCount);
+        REGISTER_FIELD(selectionHandler);
+        REGISTER_FIELD(pageSelectionHandler);
     )
 )

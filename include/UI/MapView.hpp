@@ -14,10 +14,8 @@ DECLARE_CLASS_CODEGEN(MapLoader, MapView, GorillaUI::Components::View,
     DECLARE_METHOD(void, DrawMap);
     DECLARE_METHOD(void, OnKeyPressed, int key);
     DECLARE_INSTANCE_FIELD(bool, loaded);
+    DECLARE_INSTANCE_FIELD(void*, mapInfo);
 
-    public:
-        MapInfo* mapInfo = nullptr;
-        
     REGISTER_FUNCTION(MapView,
         REGISTER_METHOD(Awake);
         REGISTER_METHOD(Load);
@@ -27,5 +25,6 @@ DECLARE_CLASS_CODEGEN(MapLoader, MapView, GorillaUI::Components::View,
         REGISTER_METHOD(DrawMap);
         REGISTER_METHOD(OnKeyPressed);
         REGISTER_FIELD(loaded);
+        REGISTER_FIELD(mapInfo);
     )
 )

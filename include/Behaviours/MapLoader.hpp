@@ -30,6 +30,7 @@ namespace MapLoader
 DECLARE_CLASS(MapLoader, Loader, "UnityEngine", "MonoBehaviour", sizeof(Il2CppObject) + sizeof(void*),
     DECLARE_STATIC_FIELD(Il2CppObject*, mapInstance);
     DECLARE_STATIC_FIELD(bool, isLoading);
+    DECLARE_STATIC_FIELD(bool, isMoved);
 
     DECLARE_METHOD(static void, ColorTreeTeleporter, Color color);
     DECLARE_METHOD(static void, JoinGame);
@@ -72,5 +73,6 @@ DECLARE_CLASS(MapLoader, Loader, "UnityEngine", "MonoBehaviour", sizeof(Il2CppOb
         REGISTER_METHOD(SetupCollisions);
         REGISTER_FIELD(mapInstance);
         REGISTER_FIELD(isLoading);
+        REGISTER_FIELD(isMoved);
     )
 )

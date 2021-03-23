@@ -19,7 +19,8 @@ extern Logger& getLogger();
 namespace MapLoader
 {
     Il2CppObject* Loader::mapInstance = nullptr;
-    bool Loader::isLoading = false; 
+    bool Loader::isLoading = false;
+    bool Loader::isMoved = false;
     void Loader::Awake()
     {}
 
@@ -156,7 +157,7 @@ namespace MapLoader
             treePointTransform = *il2cpp_utils::RunMethod(globalData->bigTreePoint, "get_transform");
         }
 
-        treeTeleporter->teleportPoints.push_back(treePointTransform);
+        il2cpp_utils::RunMethod(treeTeleporter->teleportPoints, "Add", treePointTransform);
 
         static Color green = {0.0f, 1.0f, 0.0f};
         ColorTreeTeleporter(green);
@@ -185,7 +186,7 @@ namespace MapLoader
 
 
         Teleporter* emergencyTeleporter = *il2cpp_utils::RunGenericMethod<Teleporter*>(globalData->fallEmergencyTeleport, "AddComponent", teleporterKlass);
-        emergencyTeleporter->teleportPoints.push_back(treePointTransform);
+        il2cpp_utils::RunMethod(emergencyTeleporter->teleportPoints, "Add", treePointTransform);
         emergencyTeleporter->teleporterType = TeleporterType::Treehouse;
     }
 
@@ -220,7 +221,40 @@ namespace MapLoader
             using SetGravity = function_ptr_t<void, Vector3&>;
             static SetGravity set_gravity = reinterpret_cast<SetGravity>(il2cpp_functions::resolve_icall("UnityEngine.Physics::set_gravity_Injected"));
             set_gravity(gravity);
+
+            /*
+            #warning Added return so we can play cross platform for now
+    	    return;
+            */
+            /// Get All Objects Of Type GameObject
+            static std::vector<Il2CppClass*> goKlass = {il2cpp_utils::GetClassFromName("UnityEngine", "GameObject")};
+            Array<Il2CppObject*>* allObjects = *il2cpp_utils::RunGenericMethod<Array<Il2CppObject*>*>("UnityEngine", "Resources", "FindObjectsOfTypeAll", goKlass);
+            // if not null
+            if (allObjects && !isMoved)
+            {
+                isMoved = true;
+                // for each
+                for (int j = 0; j < allObjects->Length(); j++)
+                {
+                
+                    Il2CppObject* gameObject = allObjects->values[j];
+                    if (!gameObject) continue;
+    
+                    Il2CppObject* objTransform = *il2cpp_utils::RunMethod(gameObject, "get_transform");
+                    Il2CppObject* objParent = *il2cpp_utils::RunMethod(objTransform, "get_parent");
+                    
+                    // check if parent null
+                    if (!objParent)
+                    {
+                        // if parent null it's a root, subtract 5000 of the position
+                        Vector3 pos = *il2cpp_utils::RunMethod<Vector3>(objTransform, "get_position");
+                        pos.y -= 5000.0f;
+                        il2cpp_utils::RunMethod(objTransform, "set_position", pos);
+                    }
+                }
+            }
         }
+        
     }
 
     void Loader::ForceRespawn()
@@ -233,17 +267,16 @@ namespace MapLoader
         Il2CppObject* containerTransform = *il2cpp_utils::RunMethod(spawnPointContainer, "get_transform");
 
         int childCount = *il2cpp_utils::RunMethod<int>(containerTransform, "get_childCount");
-        std::vector<Il2CppObject*>& teleportPoints = teleporter->teleportPoints;
-        teleportPoints.clear();
+        List<Il2CppObject*>* teleportPoints = teleporter->teleportPoints;
         
         for (int i = 0; i < childCount; i++)
         {
             Il2CppObject* child = *il2cpp_utils::RunMethod(containerTransform, "GetChild", i);
-            teleportPoints.push_back(child);
+            il2cpp_utils::RunMethod(teleportPoints, "Add", child);
         }
 
-        int index = teleportPoints.size() > 1 ? 0 : rand() % teleportPoints.size();
-        Il2CppObject* dest = teleportPoints[index]; 
+        int index = teleportPoints->size > 1 ? rand() % teleportPoints->size : 0;
+        Il2CppObject* dest = teleportPoints->items->values[index];
 
         Player::TeleportPlayer(dest);
     }
@@ -254,15 +287,48 @@ namespace MapLoader
         using SetGravity = function_ptr_t<void, Vector3&>;
         static SetGravity set_gravity = reinterpret_cast<SetGravity>(il2cpp_functions::resolve_icall("UnityEngine.Physics::set_gravity_Injected"));
         set_gravity(gravity);
+        /*
+        #warning Added return so we can play cross platform for now
+        return;
+        */
+        /// Get All Objects Of Type GameObject
+        static std::vector<Il2CppClass*> goKlass = {il2cpp_utils::GetClassFromName("UnityEngine", "GameObject")};
+        Array<Il2CppObject*>* allObjects = *il2cpp_utils::RunGenericMethod<Array<Il2CppObject*>*>("UnityEngine", "Resources", "FindObjectsOfTypeAll", goKlass);
+        // if not null
+        if (allObjects && isMoved)
+        {
+            isMoved = false;
+            // for each
+            for (int j = 0; j < allObjects->Length(); j++)
+            {
+
+                Il2CppObject* gameObject = allObjects->values[j];
+                if (!gameObject) continue;
+
+                Il2CppObject* objTransform = *il2cpp_utils::RunMethod(gameObject, "get_transform");
+                Il2CppObject* objParent = *il2cpp_utils::RunMethod(objTransform, "get_parent");
+                
+                // check if parent null
+                if (!objParent)
+                {
+                    // if parent null it's a root, add 5000 to the position
+                    Vector3 pos = *il2cpp_utils::RunMethod<Vector3>(objTransform, "get_position");
+                    pos.y += 5000.0f;
+                    il2cpp_utils::RunMethod(objTransform, "set_position", pos);
+                }
+            }
+        }
     }
 
     void Loader::LoadMap(MapInfo info)
     {
         if (isLoading) return;
+        if (mapLoadData.info.filePath == info.filePath) return;
         isLoading = true;
         UnloadMap();
 
         lobbyName = info.packageInfo->descriptor.author + "_" + info.packageInfo->descriptor.mapName;
+        
         mapLoadData.info = info;
         mapLoadData.loadState = LoadState::LoadingBundle;
         mapLoadData.moveNext = true;
@@ -344,10 +410,8 @@ namespace MapLoader
                 }
             }
         }
-        
         ProcessMap(mapInstance);
         mapDescriptor->gravity = mapLoadData.info.packageInfo->config.gravity;
-        PreviewOrb::ChangeOrb(mapLoadData.info);
         
         il2cpp_utils::RunMethod(mapLoadData.bundle, "Unload", false);
         mapLoadData.bundle = nullptr;
@@ -411,11 +475,10 @@ namespace MapLoader
         Il2CppObject* emergencyTeleportTransform = *il2cpp_utils::RunMethod(globalData->fallEmergencyTeleport, "get_transform");
         il2cpp_utils::RunMethod(emergencyTeleportTransform, "SetParent", mapTransform);
         Vector3 localScale = {2000.0f, 1.0f, 2000.0f};
-        Vector3 localPosition = {0.0f, -300.0f, 0.0f};
+        Vector3 localPosition = {0.0f, 4700.0f, 0.0f};
 
         il2cpp_utils::RunMethod(emergencyTeleportTransform, "set_localScale", localScale);
         il2cpp_utils::RunMethod(emergencyTeleportTransform, "set_localPosition", localPosition);
-
 
         static std::vector<Il2CppClass*> teleporterKlass = {classof(Teleporter*)};
         Teleporter* emergencyTeleporter = *il2cpp_utils::RunGenericMethod<Teleporter*>(globalData->fallEmergencyTeleport, "AddComponent", teleporterKlass);
@@ -425,12 +488,12 @@ namespace MapLoader
         Il2CppObject* containerTransform = *il2cpp_utils::RunMethod(spawnPointContainer, "get_transform");
 
         childCount = *il2cpp_utils::RunMethod<int>(containerTransform, "get_childCount");
-        emergencyTeleporter->teleportPoints.clear();
+        il2cpp_utils::RunMethod(emergencyTeleporter->teleportPoints, "Clear");
         
         for (int i = 0; i < childCount; i++)
         {
             Il2CppObject* child = *il2cpp_utils::RunMethod(containerTransform, "GetChild", i);
-            emergencyTeleporter->teleportPoints.push_back(child);
+            il2cpp_utils::RunMethod(emergencyTeleporter->teleportPoints, "Add", child);
         }
 
         emergencyTeleporter->tagOnTeleport = true;

@@ -28,6 +28,8 @@
 #include "custom-types/shared/register.hpp"
 #include "Utils/FileUtils.hpp"
 
+#include "beatsaber-hook/shared/utils/il2cpp-utils-methods.hpp"
+
 ModInfo modInfo;
 
 Logger& getLogger()
@@ -125,7 +127,103 @@ MAKE_HOOK_OFFSETLESS(VRRig_PlayTagSound, void, Il2CppObject* self, int soundInde
                 RoundEndActions::RoundEnd();
             }
             else if (isCurrentlyTag) RoundEndActions::RoundEnd();
+            else 
+            {
+                getLogger().info("Not calling game round end because time was not greater and isCurrentlyTag was false");
+            }
         }
+        else 
+        {
+            getLogger().error("Not running game end because lobby name was wrong,\nLooked for %s, had %s", Loader::lobbyName.c_str(), currentGameType.c_str());
+        }
+    }
+    else
+    {
+        getLogger().error("PhotonNetworkController was nullptr");
+    }
+}
+
+MAKE_HOOK_OFFSETLESS(GorillaTagManager_ReportTag, void, Il2CppObject* self, Il2CppObject* taggedPlayer, Il2CppObject* taggingPlayer)
+{
+    int linecounter = 0;
+    GorillaTagManager_ReportTag(self, taggedPlayer, taggingPlayer);
+    Il2CppObject* photonView = *il2cpp_utils::RunMethod(self, "get_photonView");
+    bool IsMine = *il2cpp_utils::RunMethod<bool>(photonView, "get_IsMine");
+
+    if (IsMine && taggedPlayer == taggingPlayer)
+    {
+        static Il2CppClass* raiseEventOptionsKlass = il2cpp_utils::GetClassFromName("Photon.Realtime", "RaiseEventOptions");
+        Il2CppObject* raiseEventOptions = *il2cpp_utils::New(raiseEventOptionsKlass);
+        static Il2CppClass* webFlagsKlass = il2cpp_utils::GetClassFromName("Photon.Realtime", "WebFlags");
+        Il2CppObject* flags = *il2cpp_utils::New(webFlagsKlass, (uint8_t) 1);
+        il2cpp_utils::SetFieldValue(raiseEventOptions, "Flags", flags);
+
+        bool isCurrentlyTag = *il2cpp_utils::GetFieldValue<bool>(self, "isCurrentlyTag");
+
+        Il2CppString* taggingPlayerID = *il2cpp_utils::RunMethod<Il2CppString*>(taggingPlayer, "get_UserId");
+        Il2CppString* taggedPlayerID = *il2cpp_utils::RunMethod<Il2CppString*>(taggedPlayer, "get_UserId");
+
+        if (isCurrentlyTag)
+        {
+            Il2CppObject* currentIt = *il2cpp_utils::GetFieldValue(self, "currentIt");
+            if (currentIt != taggedPlayer)
+            {
+                il2cpp_utils::RunMethod(self, "ChangeCurrentIt", taggedPlayer);
+
+                static Il2CppClass* HashtableKlass = il2cpp_utils::GetClassFromName("ExitGames.Client.Photon", "Hashtable");
+                Il2CppObject* hashTable = *il2cpp_utils::New(HashtableKlass);
+                static Il2CppString* lastTag = il2cpp_utils::createcsstr("lastTag", il2cpp_utils::StringType::Manual);
+                double time = *il2cpp_utils::RunMethod<double>("Photon.Pun", "PhotonNetwork", "get_Time");
+                il2cpp_utils::RunMethod(hashTable, "Add", lastTag, time);
+
+                Il2CppObject* currentRoom = *il2cpp_utils::GetFieldValue(self, "currentRoom");
+                /*
+                Il2CppObject* expectedProperties = *il2cpp_utils::New(HashtableKlass);
+                Il2CppObject* otherFlags = *il2cpp_utils::New(webFlagsKlass, (uint8_t)1);
+                auto* SetCustomProperties = il2cpp_utils::FindMethodUnsafe(currentRoom, "SetCustomProperties", 3);]
+                ::il2cpp_utils::RunMethodThrow<bool, false>(currentRoom, SetCustomProperties, hashTable, nullptr, nullptr);
+                */
+                time = *il2cpp_utils::RunMethod<double>("Photon.Pun", "PhotonNetwork", "get_Time");
+                il2cpp_utils::SetFieldValue(self, "lastTag", time);
+
+                Array<Il2CppObject*>* eventContent = reinterpret_cast<Array<Il2CppObject*>*>(il2cpp_functions::array_new(classof(Il2CppObject*), 2));
+
+                eventContent->values[0] = (Il2CppObject*)taggingPlayerID;
+                eventContent->values[1] = (Il2CppObject*)taggedPlayerID;
+                SendOptions options = *il2cpp_utils::GetFieldValue<SendOptions>("ExitGames.Client.Photon", "SendOptions", "SendReliable");
+                il2cpp_utils::RunMethod("Photon.Pun", "PhotonNetwork", "RaiseEvent", (uint8_t)1, (Il2CppObject*)eventContent, raiseEventOptions, options);
+            }
+        }
+        else
+        {
+            List<Il2CppObject*>* currentInfected = *il2cpp_utils::GetFieldValue<List<Il2CppObject*>*>(self, "currentInfected");
+            bool contains = false;
+            
+            for (int i = 0; i < currentInfected->size; i++)
+            {
+                if (currentInfected->items->values[i] == taggedPlayer) 
+                {
+                    contains = true;
+                    break;
+                }
+            }
+
+            if (contains)
+            {
+                il2cpp_utils::RunMethod(self, "AddInfectedPlayer", taggedPlayer);
+
+                Array<Il2CppObject*>* eventContent = reinterpret_cast<Array<Il2CppObject*>*>(il2cpp_functions::array_new(classof(Il2CppObject*), 3));
+                eventContent->values[0] = (Il2CppObject*)taggingPlayerID;
+                eventContent->values[1] = (Il2CppObject*)taggedPlayerID;
+                eventContent->values[2] = reinterpret_cast<Il2CppObject*>(*il2cpp_utils::RunMethod<int>(currentInfected, "get_Count"));
+                SendOptions options = *il2cpp_utils::GetFieldValue<SendOptions>("ExitGames.Client.Photon", "SendOptions", "SendReliable");
+                il2cpp_utils::RunMethod("Photon.Pun", "PhotonNetwork", "RaiseEvent", 2, eventContent, raiseEventOptions, options);
+            }
+        }
+    }
+    else
+    {
+        getLogger().error("IsMine: %d, TaggedPlayer: %p, TaggingPlayer: %p", IsMine, taggedPlayer, taggingPlayer);
     }
 }
 
@@ -140,7 +238,7 @@ extern "C" void setup(ModInfo& info)
 extern "C" void load()
 {
     getLogger().info("Loading mod...");
-    Modloader::requireMod("MonkeComputer", "1.0.1");
+    Modloader::requireMod("MonkeComputer", "1.0.2");
     std::string mapDir = "/sdcard/ModData/com.AnotherAxiom.GorillaTag/Mods/MonkeMapLoader/CustomMaps/";
     FileUtils::mkdir(mapDir);
 
@@ -149,6 +247,7 @@ extern "C" void load()
     INSTALL_HOOK_OFFSETLESS(getLogger(), Player_CollisionsSphereCast, il2cpp_utils::FindMethodUnsafe("GorillaLocomotion", "Player", "CollisionsSphereCast", 6));
     INSTALL_HOOK_OFFSETLESS(getLogger(), Player_Update, il2cpp_utils::FindMethodUnsafe("GorillaLocomotion", "Player", "Update", 0));
     INSTALL_HOOK_OFFSETLESS(getLogger(), VRRig_PlayTagSound, il2cpp_utils::FindMethodUnsafe("", "VRRig", "PlayTagSound", 1));
+    INSTALL_HOOK_OFFSETLESS(getLogger(), GorillaTagManager_ReportTag, il2cpp_utils::FindMethodUnsafe("", "GorillaTagManager", "ReportTag", 2));
     
     using namespace MapLoader;
     custom_types::Register::RegisterType<GorillaMapTriggerBase>();

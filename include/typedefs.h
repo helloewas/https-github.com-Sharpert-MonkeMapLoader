@@ -95,6 +95,22 @@ typedef struct RaycastHit {
     int colliderID;
 } RaycastHit;
 
+typedef struct DeliveryMode {
+    int value;
+    static constexpr const int Unreliable = 0;
+    static constexpr const int Reliable = 1;
+    static constexpr const int UnreliableUnsequenced = 2;
+    static constexpr const int ReliableUnsequenced = 3;
+} DeliveryMode;
+
+typedef struct SendOptions {
+    int DeliveryMode;
+    bool Encrypt;
+    uint8_t Channel;
+} SendOptions;
+
 DEFINE_IL2CPP_ARG_TYPE(LoadSceneParameters, "UnityEngine.SceneManagement", "LoadSceneParameters");
 DEFINE_IL2CPP_ARG_TYPE(Bounds, "UnityEngine", "Bounds");
 DEFINE_IL2CPP_ARG_TYPE(RaycastHit, "UnityEngine", "RaycastHit");
+DEFINE_IL2CPP_ARG_TYPE(DeliveryMode, "ExitGames.Client.Photon", "DeliveryMode");
+DEFINE_IL2CPP_ARG_TYPE(SendOptions, "ExitGames.Client.Photon", "SendOptions");

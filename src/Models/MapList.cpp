@@ -1,5 +1,6 @@
 #include "Models/MapList.hpp"
 #include "Utils/FileUtils.hpp"
+#include <algorithm>
 
 namespace MapLoader
 {
@@ -8,9 +9,9 @@ namespace MapLoader
         maps.clear();
         std::string basePath = "/sdcard/ModData/com.AnotherAxiom.GorillaTag/Mods/MonkeMapLoader/CustomMaps/";
         std::vector<std::string> fileNames;
-
         FileUtils::GetFilesInFolderPath("gtmap", basePath, fileNames);
 
+        std::sort(fileNames.begin(), fileNames.end());
         int i = 0;
         for (auto f : fileNames)
         {

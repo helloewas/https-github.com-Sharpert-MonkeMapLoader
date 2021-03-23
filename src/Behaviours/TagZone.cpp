@@ -36,23 +36,19 @@ namespace MapLoader
         bool inRoom = *il2cpp_utils::RunMethod<bool>("Photon.Pun", "PhotonNetwork", "get_InRoom");
         if (inRoom)
         {
-            Array<Il2CppObject*>* playerList = *il2cpp_utils::RunMethod<Array<Il2CppObject*>*>("Photon.Pun", "PhotonNetwork", "get_PlayerList");
+            Il2CppObject* gorillaTagManager = *il2cpp_utils::GetFieldValue("", "GorillaTagManager", "instance");
+            static std::vector<Il2CppClass*> gameManagerKlass = {il2cpp_utils::GetClassFromName("", "GorillaGameManager")};
+            Il2CppObject* gameManager = *il2cpp_utils::RunGenericMethod(gorillaTagManager, "GetComponent", gameManagerKlass);
+            Il2CppObject* photonView = *il2cpp_utils::RunMethod("Photon.Pun", "PhotonView", "Get", gameManager);
+            
             Il2CppObject* localPlayer = *il2cpp_utils::RunMethod("Photon.Pun", "PhotonNetwork", "get_LocalPlayer");
-            for (int i = 0; i < playerList->Length(); i++)
-            {
-                Il2CppObject* ply = playerList->values[i];
-                Il2CppObject* gorillaTagManager = *il2cpp_utils::RunMethod("", "GorillaTagManager", "get_instance");
-                static std::vector<Il2CppClass*> gameManagerKlass = {il2cpp_utils::GetClassFromName("", "GorillaGameManager")};
-                Il2CppObject* gameManager = *il2cpp_utils::RunGenericMethod(gorillaTagManager, "GetComponent", gameManagerKlass);
-                Il2CppObject* photonView = *il2cpp_utils::RunMethod("Photon.Pun", "PhotonView", "Get", gameManager);
-                static Il2CppString* reportTagRPC = il2cpp_utils::createcsstr("ReportTagRPC", il2cpp_utils::StringType::Manual);
-                int target = 2;
-                Array<Il2CppObject*>* sendArr = reinterpret_cast<Array<Il2CppObject*>*>(il2cpp_functions::array_new(classof(Il2CppObject*), 2));
-                sendArr->values[0] = ply;
-                sendArr->values[1] = localPlayer;
 
-                il2cpp_utils::RunMethod(photonView, "RPC", reportTagRPC, target, sendArr);
-            }
+            Array<Il2CppObject*>* sendArr = reinterpret_cast<Array<Il2CppObject*>*>(il2cpp_functions::array_new(classof(Il2CppObject*), 1));
+            sendArr->values[0] = localPlayer;
+            static Il2CppString* reportTagRPC = il2cpp_utils::createcsstr("ReportTagRPC", il2cpp_utils::StringType::Manual);
+            int target = 2;
+
+            il2cpp_utils::RunMethod(photonView, "RPC", reportTagRPC, target, sendArr);
         }
     }
 }

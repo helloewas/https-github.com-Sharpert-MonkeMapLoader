@@ -8,6 +8,7 @@ DEFINE_CLASS(MapLoader::MapSelectorViewManager);
 
 using namespace GorillaUI;
 
+extern Logger& getLogger();
 namespace MapLoader
 {
     void MapSelectorViewManager::DidActivate(bool firstActivation)
@@ -17,6 +18,8 @@ namespace MapLoader
             listView = CreateView<MapSelectorView*>();
             activeView = listView;
         }
+
+        listView->computer = computer;
     }
 
     void MapSelectorViewManager::NotifyOfKeyPress(int key)

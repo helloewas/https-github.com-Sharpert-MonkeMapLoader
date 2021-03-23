@@ -5,6 +5,7 @@
 #include "monkecomputer/shared/Helpers/PageHelper.hpp"
 #include "monkecomputer/shared/ViewLib/CustomComputer.hpp"
 #include "Models/MapList.hpp"
+#include "Behaviours/PreviewOrb.hpp"
 
 DEFINE_CLASS(MapLoader::MapSelectorView);
 
@@ -12,7 +13,7 @@ extern Logger& getLogger();
 
 using namespace GorillaUI;
 
-#define MOD_PAGE_SIZE 8
+#define MOD_PAGE_SIZE 10
 
 namespace MapLoader
 {
@@ -20,45 +21,50 @@ namespace MapLoader
     {
         mapView = nullptr;
 
-        if (!selectionHandler) selectionHandler = new UISelectionHandler(EKeyboardKey::Up, EKeyboardKey::Down, EKeyboardKey::Enter, true, true);
-        if (!pageSelectionHandler) pageSelectionHandler = new UISelectionHandler(EKeyboardKey::Left, EKeyboardKey::Right, EKeyboardKey::Enter, false, true);
+        selectionHandler = new UISelectionHandler(EKeyboardKey::Up, EKeyboardKey::Down, EKeyboardKey::Enter, true, true);
+        pageSelectionHandler = new UISelectionHandler(EKeyboardKey::Left, EKeyboardKey::Right, EKeyboardKey::Enter, false, true);
 
-        selectionHandler->max = MOD_PAGE_SIZE;
+        ((UISelectionHandler*)selectionHandler)->max = MOD_PAGE_SIZE;
         std::vector<MapInfo>& maps = MapList::get_maps();
         mapCount = maps.size();
         pageCount = PageHelper::GetPageAmount(maps, MOD_PAGE_SIZE);
-        pageSelectionHandler->max = pageCount;
+        ((UISelectionHandler*)pageSelectionHandler)->max = pageCount;
 
         if (maps.size() < MOD_PAGE_SIZE)
         {
-            selectionHandler->max = maps.size();
+            ((UISelectionHandler*)selectionHandler)->max = maps.size();
         }
     }
 
     void MapSelectorView::DidActivate(bool firstActivation)
     {
         std::function<void(int)> fun = std::bind(&MapSelectorView::ShowMap, this, std::placeholders::_1);
-        selectionHandler->selectionCallback = fun;
-        Redraw();        
+        ((UISelectionHandler*)selectionHandler)->selectionCallback = fun;
+        Redraw();
+        if (firstActivation)
+        {
+            if (mapCount != 0)
+            {
+                PreviewOrb::ChangeOrb(MapList::get_map(0));
+            }
+        }
     }
 
     void MapSelectorView::ShowMap(int index)
     {
         if (!mapView) mapView = GorillaUI::CreateView<MapView*>();
-        if (mapCount == 0) return;
         if (!mapView)
         {
             getLogger().error("Map View Was Not Created!");
             return;
         }
 
-        index += (MOD_PAGE_SIZE * pageSelectionHandler->currentSelectionIndex);
+        index += (MOD_PAGE_SIZE * ((UISelectionHandler*)pageSelectionHandler)->currentSelectionIndex);
         getLogger().info("Loading map %d", index);
         ((MapView*)mapView)->mapInfo = &MapList::get_map(index);
-        CustomComputer* instance = CustomComputer::get_instance();
-        if (instance)
+        if (computer)
         {
-            GorillaUI::Components::ViewManager* activeViewManager = instance->activeViewManager;
+            GorillaUI::Components::ViewManager* activeViewManager = computer->activeViewManager;
             if (activeViewManager)
             {
                 activeViewManager->ReplaceTopView(mapView);
@@ -80,14 +86,14 @@ namespace MapLoader
     
     void MapSelectorView::DrawHeader()
     {
-        text += string_format("<color=#ffff00>== <color=#fdfdfd>Maps</color> ==</color> page %d/%d\n", pageSelectionHandler->currentSelectionIndex, pageCount - 1);
+        text += string_format("<color=#ffff00>== <color=#fdfdfd>Maps</color> ==</color> page %d/%d\n", ((UISelectionHandler*)pageSelectionHandler)->currentSelectionIndex, pageCount - 1);
     }
     
     void MapSelectorView::DrawMaps()
     {
-        std::vector<MapInfo> infos = PageHelper::GetPage(MapList::get_maps(), MOD_PAGE_SIZE, pageSelectionHandler->currentSelectionIndex);
-        selectionHandler->max = infos.size();
-        selectionHandler->currentSelectionIndex = selectionHandler->currentSelectionIndex >= infos.size() ? infos.size() - 1 : selectionHandler->currentSelectionIndex;
+        std::vector<MapInfo> infos = PageHelper::GetPage(MapList::get_maps(), MOD_PAGE_SIZE, ((UISelectionHandler*)pageSelectionHandler)->currentSelectionIndex);
+        ((UISelectionHandler*)selectionHandler)->max = infos.size();
+        ((UISelectionHandler*)selectionHandler)->currentSelectionIndex = ((UISelectionHandler*)selectionHandler)->currentSelectionIndex >= infos.size() ? infos.size() - 1 : ((UISelectionHandler*)selectionHandler)->currentSelectionIndex;
         std::vector<std::string> mapNames = {};
 
         for (auto m : infos)
@@ -95,13 +101,19 @@ namespace MapLoader
             mapNames.push_back((m.packageInfo->descriptor.mapName));
         }
 
-        SelectionHelper::DrawSelection(mapNames, selectionHandler->currentSelectionIndex, text);
+        SelectionHelper::DrawSelection(mapNames, ((UISelectionHandler*)selectionHandler)->currentSelectionIndex, text);
     }
     
     void MapSelectorView::OnKeyPressed(int key)
     {
-        selectionHandler->HandleKey((EKeyboardKey)key);
-        pageSelectionHandler->HandleKey((EKeyboardKey)key);
+        if (mapCount == 0) return;
+        if (((UISelectionHandler*)selectionHandler)->HandleKey((EKeyboardKey)key) ||
+            ((UISelectionHandler*)pageSelectionHandler)->HandleKey((EKeyboardKey)key))
+        {
+            int index = ((UISelectionHandler*)selectionHandler)->currentSelectionIndex + (MOD_PAGE_SIZE * ((UISelectionHandler*)pageSelectionHandler)->currentSelectionIndex);
+            if (index > mapCount - 1) index = mapCount - 1;
+            PreviewOrb::ChangeOrb(MapList::get_map(index));
+        }
         Redraw();
     }
 }

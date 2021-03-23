@@ -10,16 +10,16 @@ namespace MapLoader
 
 DECLARE_CLASS(MapLoader, RoundEndActions, "UnityEngine", "MonoBehaviour", sizeof(Il2CppObject) + sizeof(void*),
     DECLARE_INSTANCE_FIELD(bool, respawnOnRoundEnd);
-    DECLARE_METHOD(void, Start);
+    DECLARE_METHOD(void, Awake);
     DECLARE_METHOD(static void, RoundEnd);
+    DECLARE_INSTANCE_FIELD(List<Il2CppObject*>*, objectsToEnable);
+    DECLARE_INSTANCE_FIELD(List<Il2CppObject*>*, objectsToDisable);
 
-    public:
-        std::vector<Il2CppObject*> objectsToEnable;
-        std::vector<Il2CppObject*> objectsToDisable;
-        static inline RoundEndActions* instance = nullptr;
     REGISTER_FUNCTION(RoundEndActions,
-        REGISTER_METHOD(Start);
+        REGISTER_METHOD(Awake);
         REGISTER_METHOD(RoundEnd);
         REGISTER_FIELD(respawnOnRoundEnd);
+        REGISTER_FIELD(objectsToEnable);
+        REGISTER_FIELD(objectsToDisable);
     )
 )
