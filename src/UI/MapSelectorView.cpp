@@ -6,6 +6,7 @@
 #include "monkecomputer/shared/ViewLib/CustomComputer.hpp"
 #include "Models/MapList.hpp"
 #include "Behaviours/PreviewOrb.hpp"
+#include "monkecomputer/shared/KeyExtension.hpp"
 
 DEFINE_CLASS(MapLoader::MapSelectorView);
 
@@ -107,6 +108,83 @@ namespace MapLoader
     void MapSelectorView::OnKeyPressed(int key)
     {
         if (mapCount == 0) return;
+
+        if (key == (int)EKeyboardKey::Option1)
+        {
+            MapList::Load();
+            
+            std::vector<MapInfo>& maps = MapList::get_maps();
+            mapCount = maps.size();
+            pageCount = PageHelper::GetPageAmount(maps, MOD_PAGE_SIZE);
+            ((UISelectionHandler*)pageSelectionHandler)->max = pageCount;
+
+            if (mapCount < MOD_PAGE_SIZE)
+            {
+                ((UISelectionHandler*)selectionHandler)->max = maps.size();
+            }
+        }
+
+        char letter;
+        if (KeyExtension::TryParseLetter((EKeyboardKey)key, letter))
+        {
+            std::vector<MapInfo>& maps = MapList::get_maps();
+            int sel = 0;
+            bool found = false;
+
+            for (auto m : maps)
+            {
+                if (m.packageInfo->descriptor.mapName[0] == letter)
+                {
+                    found = true;
+                    break;
+                }
+                sel++;
+            }
+
+            if (found)
+            {
+                int page = sel / MOD_PAGE_SIZE;
+                sel = sel %= MOD_PAGE_SIZE;
+
+                ((UISelectionHandler*)selectionHandler)->currentSelectionIndex = sel;
+                ((UISelectionHandler*)pageSelectionHandler)->currentSelectionIndex = page;
+
+                int index = ((UISelectionHandler*)selectionHandler)->currentSelectionIndex + (MOD_PAGE_SIZE * ((UISelectionHandler*)pageSelectionHandler)->currentSelectionIndex);
+                if (index > mapCount - 1) index = mapCount - 1;
+                PreviewOrb::ChangeOrb(MapList::get_map(index));
+            }
+        }
+
+        int num;
+        if (KeyExtension::TryParseNumber((EKeyboardKey)key, num))
+        {
+            std::vector<MapInfo>& maps = MapList::get_maps();
+            int sel = 0;
+            bool found = false;
+            for (auto m : maps)
+            {
+                if (m.packageInfo->descriptor.mapName[0] == num + '0')
+                {
+                    found = true;
+                    break;
+                }
+                sel++;
+            }
+            
+            if (found)
+            {
+                int page = sel / MOD_PAGE_SIZE;
+                sel %= MOD_PAGE_SIZE;
+
+                ((UISelectionHandler*)selectionHandler)->currentSelectionIndex = sel;
+                ((UISelectionHandler*)pageSelectionHandler)->currentSelectionIndex = page;
+
+                int index = ((UISelectionHandler*)selectionHandler)->currentSelectionIndex + (MOD_PAGE_SIZE * ((UISelectionHandler*)pageSelectionHandler)->currentSelectionIndex);
+                if (index > mapCount - 1) index = mapCount - 1;
+                PreviewOrb::ChangeOrb(MapList::get_map(index));
+            }
+        }
+
         if (((UISelectionHandler*)selectionHandler)->HandleKey((EKeyboardKey)key) ||
             ((UISelectionHandler*)pageSelectionHandler)->HandleKey((EKeyboardKey)key))
         {
@@ -114,6 +192,7 @@ namespace MapLoader
             if (index > mapCount - 1) index = mapCount - 1;
             PreviewOrb::ChangeOrb(MapList::get_map(index));
         }
+
         Redraw();
     }
 }

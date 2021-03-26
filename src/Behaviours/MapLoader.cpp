@@ -49,10 +49,13 @@ namespace MapLoader
         if (mapInstance)
         {
             il2cpp_utils::RunMethod("UnityEngine", "Object", "Destroy", mapInstance);
+            
             mapInstance = nullptr;
+            /*
             using UnloadUnusedAssets = function_ptr_t<void>;
             static UnloadUnusedAssets unloadUnusedAssets = reinterpret_cast<UnloadUnusedAssets>(il2cpp_functions::resolve_icall("UnityEngine.Resources::UnloadUnusedAssets"));
             unloadUnusedAssets();
+            */
         }
     }
 
@@ -88,9 +91,17 @@ namespace MapLoader
                 globalData->bigTreeTeleportToMap = teleporter;
                 il2cpp_utils::RunMethod(teleporter, "set_layer", MASKLAYER_PLAYERTRIGGER);
                 il2cpp_utils::RunMethod(teleporter, "DontDestroyOnLoad", teleporter);
+                static std::vector<Il2CppClass*> reflectionProbeKlass = {il2cpp_utils::GetClassFromName("UnityEngine", "ReflectionProbe")};
+                Array<Il2CppObject*>* probes = *il2cpp_utils::RunGenericMethod<Array<Il2CppObject*>*>(teleporter, "GetComponentsInChildren", reflectionProbeKlass);
+
+                for (int i = 0; i < probes->Length(); i++)
+                {
+                    il2cpp_utils::RunMethod(probes->values[i], "set_enabled", false);
+                    il2cpp_utils::RunMethod("UnityEngine", "Object", "Destroy", probes->values[i]);
+                }
             }, "_Teleporter", il2cpp_utils::GetSystemType("UnityEngine", "GameObject"));
         }
-
+        
         std::string orbPath = "/sdcard/ModData/com.AnotherAxiom.GorillaTag/Mods/MonkeMapLoader/Orb/orb.json";
         auto* loader = new CosmeticLoader(orbPath, [&](std::string name, Il2CppObject* orb){
             static std::vector<Il2CppClass*> orbKlass = {classof(PreviewOrb*)};

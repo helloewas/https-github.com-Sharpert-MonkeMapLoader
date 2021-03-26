@@ -39,18 +39,34 @@ namespace MapLoader
             il2cpp_utils::RunMethod(playerRigidBody, "set_isKinematic", true);
 
             Il2CppObject* playerTransform = *il2cpp_utils::RunMethod(player, "get_transform");
-
+            Il2CppObject* bodyCollider = *il2cpp_utils::GetFieldValue(player, "bodyCollider");
+            Il2CppObject* colliderTransform = *il2cpp_utils::RunMethod(bodyCollider, "get_transform");
             Vector3 pos = *il2cpp_utils::RunMethod<Vector3>(destination, "get_position");
-            getLogger().info("dest: %.2f, %.2f, %.2f", pos.x, pos.y, pos.z);
-            il2cpp_utils::RunMethod(playerTransform, "set_position", pos);
+            Vector3 playerPos = *il2cpp_utils::RunMethod<Vector3>(playerTransform, "get_position");
+            Vector3 colliderPos = *il2cpp_utils::RunMethod<Vector3>(colliderTransform, "get_position");
+            float x = pos.x - colliderPos.x + playerPos.x;
+            float y = pos.y - colliderPos.y + playerPos.y;
+            float z = pos.z - colliderPos.z + playerPos.z;
+            Vector3 correctedPosition = {x, y, z};
+
+            getLogger().info("dest: %.2f, %.2f, %.2f", correctedPosition.x, correctedPosition.y, correctedPosition.z);
+            il2cpp_utils::RunMethod(playerTransform, "set_position", correctedPosition);
             
-            Quaternion orig = *il2cpp_utils::RunMethod<Quaternion>(destination, "get_rotation");
-            Vector3 euler = *il2cpp_utils::RunMethod<Vector3>(orig, "get_eulerAngles");
-            Quaternion newrot = *il2cpp_utils::RunMethod<Quaternion>("UnityEngine", "Quaternion", "Euler", euler.x, euler.y, euler.z);
-            il2cpp_utils::RunMethod(playerTransform, "set_rotation", newrot);
+            Quaternion destOrig = *il2cpp_utils::RunMethod<Quaternion>(destination, "get_rotation");
+            Vector3 destEuler = *il2cpp_utils::RunMethod<Vector3>(destOrig, "get_eulerAngles");
+
+            Il2CppObject* headCollider = *il2cpp_utils::GetFieldValue(player, "headCollider");
+            Il2CppObject* headTransform = *il2cpp_utils::RunMethod(headCollider, "get_transform");
+            Quaternion headRot = *il2cpp_utils::RunMethod<Quaternion>(headTransform, "get_rotation");
+            Vector3 headEuler = *il2cpp_utils::RunMethod<Vector3>(headRot, "get_eulerAngles");
+            float turnAmt = destEuler.y - headEuler.y;
+            il2cpp_utils::RunMethod(player, "Turn", turnAmt);
+
+            //Quaternion newrot = *il2cpp_utils::RunMethod<Quaternion>("UnityEngine", "Quaternion", "Euler", euler.x, euler.y, euler.z);
+            ///il2cpp_utils::RunMethod(playerTransform, "set_rotation", newrot);
 
             // set last position
-            il2cpp_utils::SetFieldValue(player, "lastPosition", pos);
+            il2cpp_utils::SetFieldValue(player, "lastPosition", correctedPosition);
 
             // reset velocity history
             int velocityHistorySize = *il2cpp_utils::GetFieldValue<int>(player, "velocityHistorySize");
@@ -58,8 +74,6 @@ namespace MapLoader
             il2cpp_utils::SetFieldValue(player, "velocityHistory", velocityHistory);
 
             // set last head pos
-            Il2CppObject* headCollider = *il2cpp_utils::GetFieldValue(player, "headCollider");
-            Il2CppObject* headTransform = *il2cpp_utils::RunMethod(headCollider, "get_transform");
             Vector3 headPos = *il2cpp_utils::RunMethod<Vector3>(headTransform, "get_position");
             il2cpp_utils::SetFieldValue(player, "lastHeadPosition", headPos);
 
