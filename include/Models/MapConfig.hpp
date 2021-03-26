@@ -21,11 +21,16 @@ namespace MapLoader
                 float b = color["b"].GetFloat();
                 mapColor = (Color){r, g, b};
                 gravity = val.HasMember("gravity") ? val["gravity"].GetFloat() : -9.8f;
+
+                guid = val.HasMember("guid") ? val["guid"].GetString() : "";
+                version = val.HasMember("version") ? val["version"].GetInt() : 0;
             }
 
             std::string imagePath = "";
             std::string cubeMapImagePath = "";
             Color mapColor = {1.0f, 1.0f, 1.0f};
             float gravity = -9.8f;
+            std::string guid = "";
+            int version = 0;
     };
 }

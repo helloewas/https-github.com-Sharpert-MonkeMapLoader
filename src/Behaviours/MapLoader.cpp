@@ -91,14 +91,6 @@ namespace MapLoader
                 globalData->bigTreeTeleportToMap = teleporter;
                 il2cpp_utils::RunMethod(teleporter, "set_layer", MASKLAYER_PLAYERTRIGGER);
                 il2cpp_utils::RunMethod(teleporter, "DontDestroyOnLoad", teleporter);
-                static std::vector<Il2CppClass*> reflectionProbeKlass = {il2cpp_utils::GetClassFromName("UnityEngine", "ReflectionProbe")};
-                Array<Il2CppObject*>* probes = *il2cpp_utils::RunGenericMethod<Array<Il2CppObject*>*>(teleporter, "GetComponentsInChildren", reflectionProbeKlass);
-
-                for (int i = 0; i < probes->Length(); i++)
-                {
-                    il2cpp_utils::RunMethod(probes->values[i], "set_enabled", false);
-                    il2cpp_utils::RunMethod("UnityEngine", "Object", "Destroy", probes->values[i]);
-                }
             }, "_Teleporter", il2cpp_utils::GetSystemType("UnityEngine", "GameObject"));
         }
         
@@ -338,8 +330,14 @@ namespace MapLoader
         isLoading = true;
         UnloadMap();
 
+        
         lobbyName = info.packageInfo->descriptor.author + "_" + info.packageInfo->descriptor.mapName;
         
+        if (info.packageInfo->config.guid != "")
+        {
+            lobbyName = string_format("%s_%d", info.packageInfo->config.guid.c_str(), info.packageInfo->config.version);
+        }
+
         mapLoadData.info = info;
         mapLoadData.loadState = LoadState::LoadingBundle;
         mapLoadData.moveNext = true;

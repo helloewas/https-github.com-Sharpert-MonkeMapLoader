@@ -27,7 +27,7 @@ namespace MapLoader
     };
 }
 
-DECLARE_CLASS(MapLoader, Loader, "UnityEngine", "MonoBehaviour", sizeof(Il2CppObject) + sizeof(void*),
+DECLARE_CLASS(MapLoader, Loader, "UnityEngine", "MonoBehaviour", sizeof(Il2CppObject) + sizeof(void*) + sizeof(MapLoadData),
     DECLARE_STATIC_FIELD(Il2CppObject*, mapInstance);
     DECLARE_STATIC_FIELD(bool, isLoading);
     DECLARE_STATIC_FIELD(bool, isMoved);
@@ -41,6 +41,9 @@ DECLARE_CLASS(MapLoader, Loader, "UnityEngine", "MonoBehaviour", sizeof(Il2CppOb
     DECLARE_METHOD(void, Update);
     DECLARE_METHOD(void, UnloadMap);
     DECLARE_METHOD(void, Initialize);
+    DECLARE_METHOD(void, LoadBundle);
+    DECLARE_METHOD(void, LoadScene);
+    DECLARE_METHOD(void, InitializeMap);
     DECLARE_METHOD(void, InitializeGlobalData);
     DECLARE_METHOD(void, ProcessMap, Il2CppObject* map);
     DECLARE_METHOD(void, ProcessChildren, Il2CppObject* parent);
@@ -52,9 +55,6 @@ DECLARE_CLASS(MapLoader, Loader, "UnityEngine", "MonoBehaviour", sizeof(Il2CppOb
         static inline MapDescriptor* mapDescriptor = nullptr;
 
         void LoadMap(MapInfo info);
-        void LoadBundle();
-        void LoadScene();
-        void InitializeMap();
     private:
         MapLoadData mapLoadData;
 
@@ -63,6 +63,9 @@ DECLARE_CLASS(MapLoader, Loader, "UnityEngine", "MonoBehaviour", sizeof(Il2CppOb
         REGISTER_METHOD(Update);
         REGISTER_METHOD(UnloadMap);
         REGISTER_METHOD(Initialize);
+        REGISTER_METHOD(LoadBundle);
+        REGISTER_METHOD(LoadScene);
+        REGISTER_METHOD(InitializeMap);
         REGISTER_METHOD(InitializeGlobalData);
         REGISTER_METHOD(ColorTreeTeleporter);
         REGISTER_METHOD(JoinGame);

@@ -87,7 +87,7 @@ namespace MapLoader
     
     void MapSelectorView::DrawHeader()
     {
-        text += string_format("<color=#ffff00>== <color=#fdfdfd>Maps</color> ==</color> page %d/%d\n", ((UISelectionHandler*)pageSelectionHandler)->currentSelectionIndex, pageCount - 1);
+        text += string_format("<color=#ffff00>== <color=#fdfdfd>Maps</color> ==</color> page [<] %d/%d [>]\n", ((UISelectionHandler*)pageSelectionHandler)->currentSelectionIndex, pageCount - 1);
     }
     
     void MapSelectorView::DrawMaps()
