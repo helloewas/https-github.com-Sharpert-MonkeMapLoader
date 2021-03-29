@@ -16,6 +16,11 @@ DEFINE_CLASS(MapLoader::Loader);
 
 extern bool getSceneName(Scene scene, std::string& out);
 extern Logger& getLogger();
+
+static Color green = {0.0f, 1.0f, 0.0f};
+static Color red = {1.0f, 0.0f, 0.0f};
+static Color blue = {0.0f, 0.0f, 1.0f};
+
 namespace MapLoader
 {
     Il2CppObject* Loader::mapInstance = nullptr;
@@ -162,8 +167,7 @@ namespace MapLoader
 
         il2cpp_utils::RunMethod(treeTeleporter->teleportPoints, "Add", treePointTransform);
 
-        static Color green = {0.0f, 1.0f, 0.0f};
-        ColorTreeTeleporter(green);
+        ColorTreeTeleporter(red);
 
         static Il2CppString* fallEmergencyTeleportName = il2cpp_utils::createcsstr("FallEmergencyTeleport", il2cpp_utils::StringType::Manual);
 
@@ -420,6 +424,7 @@ namespace MapLoader
             }
         }
         ProcessMap(mapInstance);
+        ColorTreeTeleporter(green);
         mapDescriptor->gravity = mapLoadData.info.packageInfo->config.gravity;
         
         il2cpp_utils::RunMethod(mapLoadData.bundle, "Unload", false);
